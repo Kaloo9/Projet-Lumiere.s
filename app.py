@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from allocineAPI.allocineAPI import allocineAPI
 from datetime import date
 
@@ -13,6 +13,10 @@ CINEMAS = {
     "UGC Ciné Cité Internationale": "P0671",
     "Cinéma Comœdia": "P3757",
 }
+
+@app.route("/")
+def accueil():
+    return render_template("index.html")
 
 @app.route("/api/seances")
 def seances():
