@@ -1,9 +1,9 @@
-from allocineAPI.allocineAPI import allocineAPI
+'''from allocineAPI.allocineAPI import allocineAPI
 
 api = allocineAPI()
 
 # Étape 1 : chercher Lyon parmi les grandes villes
-'''print("=== Recherche de Lyon dans get_top_villes() ===")
+print("=== Recherche de Lyon dans get_top_villes() ===")
 villes = api.get_top_villes()
 lyon = None
 for v in villes:
@@ -32,7 +32,7 @@ print("\n=== Cinémas Pathé (recherche Carré de Soie) ===")
 cinemas_pathe = api.get_cinema("circuit-81002")
 for c in cinemas_pathe:
     if "soie" in c["name"].lower() or "vaulx" in c["address"].lower():
-        print(c)'''
+        print(c)
 
 
 from datetime import date
@@ -43,6 +43,18 @@ today = date.today().isoformat()  # format YYYY-MM-DD
 #seances = api.get_showtime("P0050", today)
 seances = api.get_showtime("P0036", today)  # UGC Ciné Cité Lyon Part-Dieu
 for s in seances:
-    print(s)
+    print(s)'''
 
 
+from allocineAPI.allocineAPI import allocineAPI, URLs
+from datetime import date
+import json
+
+api = allocineAPI()
+today = date.today().isoformat()
+
+# on appelle la même URL que get_showtime(), mais SANS le filtrage de la librairie
+data = api._get_json_request(URLs.showtime_url("P0036", today, 1))
+premier_film = data["results"][0]
+
+print(json.dumps(premier_film, indent=2, ensure_ascii=False))
