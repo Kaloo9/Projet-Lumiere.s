@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Lumi — Séances cinéma Lyon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster+Two&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Germania+One&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Lumi</h1>
+    <div class="entete">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo Lumi" class="logo">
+        <h1>Lumi</h1>
+    </div>
     <p>Les séances de tes cinémas lyonnais, réunies sur une page.</p>
 
     <div id="seances">
@@ -16,4 +21,5 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
+
 

@@ -1,0 +1,84 @@
+body {
+    background-color: #16233D;
+    color: #F5E6D3;
+    font-family: Arial, sans-serif;
+}
+
+#seances {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+
+.film {
+    background-color: #1F3355;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.film:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 15px #5EEAD4;
+}
+
+
+.film img {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.film h3 {
+    font-size: 1rem;
+    margin: 8px 0 0;
+}
+
+h1 {
+    text-align: center;
+    color: #6dd3d7;
+    font-size: 3.5rem;
+    letter-spacing: 2px;
+    font-family: "Lobster Two", sans-serif;
+}
+
+p {
+    text-align: center;
+    color: #f1ce9c;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    font-family: "Germania One", sans-serif;
+}
+
+.horaires ul {
+    list-style: none;
+    padding: 0;
+}
+
+.horaires li {
+    color: #D9A441;
+    margin: 4px 0;
+}
+
+.horaires h4 {
+    margin: 25px 0 0;
+    font-size: 0.9rem;
+}
+
+.entete {
+    position: relative;
+}
+
+.logo {
+    position: absolute;
+    left: 20px;
+    top: 0;
+    width: 90px;
+}
+
+
+
