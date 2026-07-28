@@ -1,7 +1,18 @@
-async function chargerSeances() {
-    const reponse = await fetch("/api/seances");
+async function chargerSeances(jour) {
+    let url = "/api/seances";
+    if (jour) {
+        url += `?jour=${jour}`;
+    }
+    const reponse = await fetch(url);
     const donnees = await reponse.json();
     afficherFilms(donnees);
+}
+
+function activerSelecteurJour() {
+    const inputJour = document.getElementById("jour");
+    inputJour.addEventListener("change", function () {
+        chargerSeances(inputJour.value);
+    });
 }
 
 function afficherFilms(donnees) {
@@ -24,6 +35,7 @@ function afficherFilms(donnees) {
     activerClics();
 }
 
+
 function genererHorairesHTML(seances) {
     let html = "";
     for (const [nomCinema, horaires] of Object.entries(seances)) {
@@ -38,14 +50,18 @@ function genererHorairesHTML(seances) {
                 langue = "VF";
             }
 
-            const proj = seance.projection[0]; // ex: "DIGITAL", "IMAX"
+            const infosTexte = `${seance.projection} ${seance.experience}`;
 
-            let texteExperience = "";
-            if (seance.experience) {
-                texteExperience = ` — ${seance.experience}`;
+            let texteFormat = "";
+            if (infosTexte.includes("4DX")) {
+                texteFormat = " — 4DX";
+            } else if (infosTexte.includes("IMAX")) {
+                texteFormat = " — IMAX";
+            } else if (infosTexte.includes("3D")) {
+                texteFormat = " — 3D";
             }
 
-            html += `<li>${heure} — ${langue} — ${proj}${texteExperience}</li>`;
+            html += `<li>${heure} — ${langue}${texteFormat}</li>`;
         }
         html += "</ul>";
     }
@@ -67,4 +83,6 @@ function activerClics() {
 }
 
 chargerSeances();
+activerSelecteurJour();
+
 

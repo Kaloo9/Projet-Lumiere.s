@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from allocineAPI.allocineAPI import allocineAPI, URLs
 from datetime import date
 
@@ -52,12 +52,12 @@ def accueil():
 
 @app.route("/api/seances")
 def seances():
-    today = date.today().isoformat()
+    jour = request.args.get("jour", date.today().isoformat())
     films = {}
 
     for nom_cinema, id_cinema in CINEMAS.items():
-        horaires = get_seances_detaillees(id_cinema, today)   # <-- notre fonction, plus get_showtime()
-        infos_films = api.get_movies(id_cinema, today)
+        horaires = get_seances_detaillees(id_cinema, jour)
+        infos_films = api.get_movies(id_cinema, jour)
 
         affiches = {}
         for film in infos_films:
