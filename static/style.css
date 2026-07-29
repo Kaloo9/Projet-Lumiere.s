@@ -80,5 +80,34 @@ p {
     width: 90px;
 }
 
+.barre-outils {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+}
 
+.filtres {
+    display: flex;
+    gap: 15px;
+}
+
+.selecteur-jour {
+    color: #f1ce9c;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    font-family: "Germania One", sans-serif;
+}
+
+#jour {
+    padding: 8px;
+    background-color: #1F3355;
+    color: #6dd3d7;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    font-family: "Germania One", sans-serif;
+    cursor: pointer;
+}
 

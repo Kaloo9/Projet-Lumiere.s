@@ -14,9 +14,31 @@
     </div>
     <p>Les séances de tes cinémas lyonnais, réunies sur une page.</p>
 
-    <div class="selecteur-jour">
-        <label for="jour">Voir les séances du :</label>
-        <input type="date" id="jour">
+    <div class="barre-outils">
+        <div class="filtres">
+            <div class="filtre-cinema">
+                <button id="bouton-filtre">Filtrer par cinéma</button>
+                <div class="liste-cinemas" style="display: none;">
+                    <label><input type="checkbox" value="Pathé Bellecour" checked> Pathé Bellecour</label>
+                    <label><input type="checkbox" value="Pathé Carré de Soie" checked> Pathé Carré de Soie</label>
+                    <label><input type="checkbox" value="Institut Lumière" checked> Institut Lumière</label>
+                    <label><input type="checkbox" value="UGC Ciné Cité Lyon Part-Dieu" checked> UGC Part-Dieu</label>
+                    <label><input type="checkbox" value="UGC Ciné Cité Internationale" checked> UGC Cité Internationale</label>
+                    <label><input type="checkbox" value="Cinéma Comœdia" checked> Comœdia</label>
+                </div>
+            </div>
+
+            <select id="tri">
+                <option value="defaut">Trier par...</option>
+                <option value="sortie-asc">Date de sortie (croissant)</option>
+                <option value="sortie-desc">Date de sortie (décroissant)</option>
+            </select>
+        </div>
+
+        <div class="selecteur-jour">
+            <label for="jour">Voir les séances du :</label>
+            <input type="date" id="jour">
+        </div>
     </div>
 
     <div id="seances">

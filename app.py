@@ -45,6 +45,13 @@ def get_seances_detaillees(id_cinema, date_str):
 
     return resultat
 
+def date_sortie_la_plus_ancienne(releases):
+    # releases : liste de dicts {"releaseName": ..., "releaseDate": ...}
+    # releaseDate peut être None (pas renseigné) -> on l'ignore avant de chercher le minimum.
+    dates = [r["releaseDate"] for r in releases if r["releaseDate"] is not None]
+    if dates:
+        return min(dates)
+    return None
 
 @app.route("/")
 def accueil():
@@ -59,19 +66,24 @@ def seances():
         horaires = get_seances_detaillees(id_cinema, jour)
         infos_films = api.get_movies(id_cinema, jour)
 
+
         affiches = {}
+        dates_sortie = {}
         for film in infos_films:
             affiches[film["title"]] = film["urlPoster"]
+            dates_sortie[film["title"]] = date_sortie_la_plus_ancienne(film["releases"])
 
         for entree in horaires:
             titre = entree["title"]
             if titre not in films:
                 films[titre] = {
                     "poster": affiches.get(titre),
+                    "dateSortie": dates_sortie.get(titre),
                     "seances": {}
                 }
             films[titre]["seances"][nom_cinema] = entree["showtimes"]
-
+        
+      
     return jsonify(films)
 
 if __name__ == "__main__":
