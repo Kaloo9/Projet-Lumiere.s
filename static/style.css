@@ -9,6 +9,7 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 20px;
     padding: 20px;
+    margin-top: 20px;
 }
 
 
@@ -85,6 +86,7 @@ p {
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
+    margin-top: 32px;
 }
 
 .filtres {
@@ -111,3 +113,65 @@ p {
     cursor: pointer;
 }
 
+.filtre-cinema {
+    position: relative; /* point de repère pour positionner .liste-cinemas par rapport à lui */
+}
+
+#bouton-filtre {
+    text-align: left;
+    padding: 8px 20px;
+    min-width: 210px;
+    background-color: #1F3355;
+    color: #6dd3d7;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    font-family: "Germania One", sans-serif;
+    cursor: pointer;
+}
+
+#bouton-filtre:hover {
+    box-shadow: 0 0 10px #5EEAD4;
+}
+
+.liste-cinemas {
+    position: absolute;    /* sort du flux, se positionne par rapport à .filtre-cinema (son ancêtre relative) */
+    top: 110%;             /* juste sous le bouton */
+    left: 0;
+    z-index: 10;            /* passe au-dessus de la grille de films */
+    background-color: #1F3355;
+    border-radius: 8px;
+    padding: 8px;
+    min-width: 194px;
+    display: flex;
+    flex-direction: column; /* une case à cocher par ligne */
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.liste-cinemas label {
+    color: #f1ce9c;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap; /* évite que "UGC Cité Internationale" se coupe sur 2 lignes */
+}
+
+.liste-cinemas input {
+    accent-color: #5EEAD4; /* turquoise néon de la palette, cocher */
+    cursor: pointer;
+}
+
+
+#tri {
+    text-align: left;
+    padding: 8px 20px;
+    background-color: #1F3355;
+    color: #6dd3d7;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    font-family: "Germania One", sans-serif;
+    cursor: pointer;
+}

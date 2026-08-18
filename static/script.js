@@ -1,13 +1,19 @@
 let dernieresDonnees = null; // mémorise les dernières données reçues du serveur, pour filtrer/trier sans refaire de fetch
 
+function afficherChargement() {
+    document.getElementById("seances").innerHTML = "<p>Chargement des séances...</p>";
+}
+
+
 async function chargerSeances(jour) {
+    afficherChargement(); // affiche le message pendant qu'on attend la réponse du serveur
     let url = "/api/seances";
     if (jour) {
-        url += `?jour=${jour}`; // ajoute la date choisie dans l'URL si elle est fournie
+        url += `?jour=${jour}`;
     }
     const reponse = await fetch(url);
     const donnees = await reponse.json();
-    dernieresDonnees = donnees; // on garde une copie pour pouvoir refiltrer/retrier plus tard
+    dernieresDonnees = donnees;
     mettreAJourAffichage();
 }
 
