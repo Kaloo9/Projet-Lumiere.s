@@ -1,5 +1,6 @@
 let dernieresDonnees = null; // mémorise les dernières données reçues du serveur, pour filtrer/trier sans refaire de fetch
 
+
 function afficherChargement() {
     document.getElementById("seances").innerHTML = "<p>Chargement des séances...</p>";
 }
@@ -16,6 +17,7 @@ async function chargerSeances(jour) {
     dernieresDonnees = donnees;
     mettreAJourAffichage();
 }
+
 
 // Affiche/masque la liste de cases à cocher quand on clique sur le bouton "Filtrer par cinéma"
 function activerBoutonFiltre() {
@@ -146,7 +148,7 @@ function genererHorairesHTML(seances) {
     for (const [nomCinema, horaires] of Object.entries(seances)) {
         html += `<h4>${nomCinema}</h4><ul>`;
         for (const seance of horaires) {
-            const heure = seance.startsAt.slice(11, 16); // extrait "HH:MM" de la date complète
+            const heure = seance.startsAt.slice(11, 16);
 
             let langue;
             if (seance.diffusionVersion === "ORIGINAL") {
@@ -155,7 +157,7 @@ function genererHorairesHTML(seances) {
                 langue = "VF";
             }
 
-            const infosTexte = `${seance.projection} ${seance.experience}`; // conversion en texte, peu importe le type d'origine
+            const infosTexte = `${seance.projection} ${seance.experience}`;
 
             let texteFormat = "";
             if (infosTexte.includes("4DX")) {
@@ -166,7 +168,13 @@ function genererHorairesHTML(seances) {
                 texteFormat = " — 3D";
             }
 
-            html += `<li>${heure} — ${langue}${texteFormat}</li>`;
+            let contenuSeance = `${heure} — ${langue}${texteFormat}`;
+
+            if (seance.lienReservation) {
+                contenuSeance = `<a href="${seance.lienReservation}" target="_blank" rel="noopener">${contenuSeance}</a>`;
+            }
+
+            html += `<li>${contenuSeance}</li>`;
         }
         html += "</ul>";
     }

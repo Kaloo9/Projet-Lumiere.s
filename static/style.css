@@ -175,3 +175,15 @@ p {
     font-family: "Germania One", sans-serif;
     cursor: pointer;
 }
+
+.horaires li a {
+    color: inherit;
+    text-decoration: none;
+    font-family: inherit;
+}
+
+.horaires li a:hover {
+    color: #6dd3d7;
+    text-decoration: underline;
+}
+

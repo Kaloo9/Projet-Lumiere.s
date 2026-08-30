@@ -39,6 +39,7 @@ def get_seances_detaillees(id_cinema, date_str):
                             "diffusionVersion": seance["diffusionVersion"],
                             "projection": seance["projection"],   # liste, ex: ["DIGITAL"], ["IMAX"]
                             "experience": seance["experience"],   # ex: null, ou "4DX"
+                            "lienReservation": lien_reservation(seance.get("data", {})),
                         })
 
             resultat.append({"title": titre, "showtimes": seances})
@@ -85,6 +86,20 @@ def seances():
         
       
     return jsonify(films)
+
+
+def lien_reservation(data):
+    # data : le champ "data" d'une séance, contient éventuellement "ticketing" (liste de billetteries)
+    ticketing = data.get("ticketing")
+    if not ticketing:
+        return None  # pas de billetterie dispo pour cette séance
+
+    for billetterie in ticketing:
+        if billetterie["provider"] == "default":
+            return billetterie["urls"][0]  # on préfère le lien direct du cinéma
+
+    return ticketing[0]["urls"][0]  # sinon, on prend le premier lien disponible
+
 
 if __name__ == "__main__":
     app.run(debug=True)
