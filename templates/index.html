@@ -35,12 +35,25 @@
             </select>
         </div>
 
-        <div class="selecteur-jour">
-            <label for="jour">Voir les séances du :</label>
-            <input type="date" id="jour">
+        <div class="recherche-date">
+            <div class="selecteur-jour">
+                <label for="jour">Voir les séances du :</label>
+                <input type="date" id="jour">
+            </div>
+
+            <div class="selecteur-periode">
+                <label for="periode">Sur une période :</label>
+                <select id="periode">
+                    <option value="">Choisir...</option>
+                    <option value="1">1 semaine</option>
+                    <option value="2">2 semaines</option>
+                    <option value="3">3 semaines</option>
+                </select>
+            </div>
         </div>
     </div>
 
+       
     <div id="seances">
         <p>Chargement des séances...</p>
     </div>

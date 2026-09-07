@@ -1,13 +1,19 @@
 let dernieresDonnees = null; // mémorise les dernières données reçues du serveur, pour filtrer/trier sans refaire de fetch
+let modeActuel = "jour"; // "jour" ou "periode"
 
-
-function afficherChargement() {
-    document.getElementById("seances").innerHTML = "<p>Chargement des séances...</p>";
+function afficherChargement(avecAvertissement) {
+    let html = '<div class="etat-chargement"><p>Chargement des séances...</p>';
+    if (avecAvertissement) {
+        html += '<p class="avertissement">(Cela risque de prendre un petit moment... Si vous souhaitez gagner du temps, réduisez le nombre de cinémas ou la période).</p>';
+    }
+    html += '</div>';
+    document.getElementById("seances").innerHTML = html;
 }
 
 
+// Va chercher les séances d'un jour précis (ou aujourd'hui si absent)
 async function chargerSeances(jour) {
-    afficherChargement(); // affiche le message pendant qu'on attend la réponse du serveur
+    afficherChargement();
     let url = "/api/seances";
     if (jour) {
         url += `?jour=${jour}`;
@@ -15,14 +21,30 @@ async function chargerSeances(jour) {
     const reponse = await fetch(url);
     const donnees = await reponse.json();
     dernieresDonnees = donnees;
+    modeActuel = "jour";
     mettreAJourAffichage();
 }
 
+// Va chercher les films d'une période (1/2/3 semaines), pour les cinémas cochés
+async function chargerFilmsPeriode(semaines) {
+    afficherChargement(true);
 
-// Affiche/masque la liste de cases à cocher quand on clique sur le bouton "Filtrer par cinéma"
+    const cinemasCoches = obtenirCinemasCoches();
+    const cinemasParam = encodeURIComponent(cinemasCoches.join(","));
+
+    const reponse = await fetch(`/api/films-periode?semaines=${semaines}&cinemas=${cinemasParam}`);
+    const donnees = await reponse.json();
+
+    dernieresDonnees = donnees;
+    modeActuel = "periode";
+    mettreAJourAffichage();
+}
+
+// Affiche/masque la liste de cases à cocher quand on clique sur le bouton "Par cinéma :"
 function activerBoutonFiltre() {
     const bouton = document.getElementById("bouton-filtre");
     const listeCinemas = document.querySelector(".liste-cinemas");
+
     bouton.addEventListener("click", function () {
         if (listeCinemas.style.display === "none") {
             listeCinemas.style.display = "block";
@@ -30,20 +52,34 @@ function activerBoutonFiltre() {
             listeCinemas.style.display = "none";
         }
     });
+
+    // Ferme la liste si on clique n'importe où ailleurs sur la page
+    document.addEventListener("click", function (event) {
+        const clicDansLaListe = listeCinemas.contains(event.target);
+        const clicSurLeBouton = bouton.contains(event.target);
+        if (!clicDansLaListe && !clicSurLeBouton) {
+            listeCinemas.style.display = "none";
+        }
+    });
 }
 
-// À chaque case cochée/décochée, on redemande l'affichage à jour
+// À chaque case cochée/décochée : en mode période on relance un vrai fetch (filtre géré par le serveur),
+// en mode jour on réaffiche juste depuis les données déjà en mémoire
 function activerFiltreCinema() {
     const cases = document.querySelectorAll(".liste-cinemas input");
     for (const uneCase of cases) {
         uneCase.addEventListener("change", function () {
-            mettreAJourAffichage();
+            if (modeActuel === "periode") {
+                chargerFilmsPeriode(document.getElementById("periode").value);
+            } else {
+                mettreAJourAffichage();
+            }
         });
     }
 }
 
-// Ne garde, parmi les films en mémoire (dernieresDonnees), que ceux présents dans au moins un cinéma coché
-function obtenirFilmsFiltres() {
+// Renvoie juste la liste des cinémas actuellement cochés
+function obtenirCinemasCoches() {
     const cases = document.querySelectorAll(".liste-cinemas input");
     const cinemasCoches = [];
     for (const uneCase of cases) {
@@ -51,13 +87,19 @@ function obtenirFilmsFiltres() {
             cinemasCoches.push(uneCase.value);
         }
     }
+    return cinemasCoches;
+}
+
+// Ne garde, parmi les films en mémoire (dernieresDonnees), que ceux présents dans au moins un cinéma coché
+function obtenirFilmsFiltres() {
+    const cinemasCoches = obtenirCinemasCoches();
 
     const filmsFiltres = {};
     for (const [titre, infos] of Object.entries(dernieresDonnees)) {
         for (const nomCinema of Object.keys(infos.seances)) {
             if (cinemasCoches.includes(nomCinema)) {
                 filmsFiltres[titre] = infos;
-                break; // un cinéma coché trouvé pour ce film -> pas besoin de vérifier les autres
+                break;
             }
         }
     }
@@ -67,29 +109,26 @@ function obtenirFilmsFiltres() {
 // Trie un objet de films (titre -> infos) par date de sortie, selon l'ordre choisi dans le <select>
 function trierFilms(filmsObjet, ordre) {
     if (ordre === "defaut") {
-        return filmsObjet; // pas de tri demandé, on renvoie tel quel
+        return filmsObjet;
     }
 
-    const entrees = Object.entries(filmsObjet); // transforme en tableau [[titre, infos], [titre, infos], ...] pour pouvoir utiliser .sort()
+    const entrees = Object.entries(filmsObjet);
 
     entrees.sort(function (a, b) {
-        // a et b sont deux paires [titre, infos] comparées entre elles
         const dateA = a[1].dateSortie;
         const dateB = b[1].dateSortie;
 
-        // Dans le doute (date manquante = null), le film passe en premier, peu importe le sens du tri
         if (dateA === null && dateB === null) return 0;
-        if (dateA === null) return -1; // a (sans date) passe avant b
-        if (dateB === null) return 1;  // b (sans date) passe avant a
+        if (dateA === null) return -1;
+        if (dateB === null) return 1;
 
         if (ordre === "sortie-asc") {
-            return dateA < dateB ? -1 : 1; // plus ancien en premier
+            return dateA < dateB ? -1 : 1;
         } else {
-            return dateA > dateB ? -1 : 1; // plus récent en premier
+            return dateA > dateB ? -1 : 1;
         }
     });
 
-    // On reconstruit un objet { titre: infos, ... } à partir du tableau trié
     const filmsTries = {};
     for (const [titre, infos] of entrees) {
         filmsTries[titre] = infos;
@@ -97,11 +136,16 @@ function trierFilms(filmsObjet, ordre) {
     return filmsTries;
 }
 
-// Fonction centrale : reprend les films filtrés, les trie selon le <select>, puis les affiche
+// Fonction centrale : filtre (seulement en mode jour), trie, puis affiche
 function mettreAJourAffichage() {
-    const filmsFiltres = obtenirFilmsFiltres();
+    let films = dernieresDonnees;
+
+    if (modeActuel === "jour") {
+        films = obtenirFilmsFiltres(); // en mode "periode", le backend a déjà filtré par cinéma
+    }
+
     const ordre = document.getElementById("tri").value;
-    const filmsTries = trierFilms(filmsFiltres, ordre);
+    const filmsTries = trierFilms(films, ordre);
     afficherFilms(filmsTries);
 }
 
@@ -117,7 +161,19 @@ function activerTri() {
 function activerSelecteurJour() {
     const inputJour = document.getElementById("jour");
     inputJour.addEventListener("change", function () {
+        document.getElementById("periode").value = "";
         chargerSeances(inputJour.value);
+    });
+}
+
+// Recharge les films d'une période quand on change l'option du sélecteur de période
+function activerSelecteurPeriode() {
+    const selectPeriode = document.getElementById("periode");
+    selectPeriode.addEventListener("change", function () {
+        if (selectPeriode.value) {
+            document.getElementById("jour").value = "";
+            chargerFilmsPeriode(selectPeriode.value);
+        }
     });
 }
 
@@ -127,22 +183,31 @@ function afficherFilms(donnees) {
     let html = "";
 
     for (const [titre, infos] of Object.entries(donnees)) {
-        html += `
-            <div class="film">
-                <img src="${infos.poster}" alt="${titre}">
-                <h3>${titre}</h3>
-                <div class="horaires" style="display: none;">
-                    ${genererHorairesHTML(infos.seances)}
+        if (infos.seances) {
+            html += `
+                <div class="film">
+                    <img src="${infos.poster}" alt="${titre}">
+                    <h3>${titre}</h3>
+                    <div class="horaires" style="display: none;">
+                        ${genererHorairesHTML(infos.seances)}
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            html += `
+                <div class="film">
+                    <img src="${infos.poster}" alt="${titre}">
+                    <h3>${titre}</h3>
+                </div>
+            `;
+        }
     }
 
     conteneur.innerHTML = html;
-    activerClics(); // ré-active les clics, car les .film ont été recréés par innerHTML
+    activerClics();
 }
 
-// Construit le HTML des horaires (par cinéma), avec langue (VF/VO) et format (4DX/IMAX/3D)
+// Construit le HTML des horaires (par cinéma), avec langue (VF/VO), format (4DX/IMAX/3D) et lien de réservation
 function genererHorairesHTML(seances) {
     let html = "";
     for (const [nomCinema, horaires] of Object.entries(seances)) {
@@ -181,12 +246,15 @@ function genererHorairesHTML(seances) {
     return html;
 }
 
-// Clic sur un film -> affiche/masque ses horaires
+// Clic sur un film -> affiche/masque ses horaires (ignore les films sans horaires, mode période)
 function activerClics() {
     const films = document.querySelectorAll(".film");
     for (const film of films) {
+        const horaires = film.querySelector(".horaires");
+        if (!horaires) {
+            continue;
+        }
         film.addEventListener("click", function () {
-            const horaires = film.querySelector(".horaires");
             if (horaires.style.display === "none") {
                 horaires.style.display = "block";
             } else {
@@ -196,10 +264,22 @@ function activerClics() {
     }
 }
 
+// Remet cases cochées, tri et sélecteur de période à leur état par défaut
+function reinitialiserFiltresEtTri() {
+    const cases = document.querySelectorAll(".liste-cinemas input");
+    for (const uneCase of cases) {
+        uneCase.checked = true;
+    }
+    document.getElementById("tri").value = "defaut";
+    document.getElementById("periode").value = "";
+}
+
 // Lancement au chargement de la page
+document.getElementById("jour").value = "";
+reinitialiserFiltresEtTri();
 chargerSeances();
 activerSelecteurJour();
+activerSelecteurPeriode();
 activerBoutonFiltre();
 activerFiltreCinema();
 activerTri();
-

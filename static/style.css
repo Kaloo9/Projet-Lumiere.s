@@ -187,3 +187,45 @@ p {
     text-decoration: underline;
 }
 
+.recherche-date {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.selecteur-periode {
+    color: #f1ce9c;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    font-family: "Germania One", sans-serif;
+}
+
+#periode {
+    padding: 8px;
+    background-color: #1F3355;
+    color: #6dd3d7;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    font-family: "Germania One", sans-serif;
+    cursor: pointer;
+}
+
+#jour, #periode {
+    width: 200px;
+    box-sizing: border-box; /* le padding est inclus dans les 200px, pas ajouté en plus */
+}
+
+.avertissement {
+    font-size: 0.8rem;
+}
+
+.etat-chargement {
+    grid-column: 1 / -1; /* prend toute la largeur de la grille, pas juste une colonne */
+}
+
+.etat-chargement p {
+    text-align: left;
+}
