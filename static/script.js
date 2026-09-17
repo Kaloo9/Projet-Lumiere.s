@@ -184,6 +184,7 @@ function afficherFilms(donnees) {
 
     for (const [titre, infos] of Object.entries(donnees)) {
         if (infos.seances) {
+            // Mode jour : comportement inchangé
             html += `
                 <div class="film">
                     <img src="${infos.poster}" alt="${titre}">
@@ -193,11 +194,15 @@ function afficherFilms(donnees) {
                     </div>
                 </div>
             `;
-        } else {
+        } else if (infos.joursDiffusion) {
+            // Mode période : liste des jours où le film passe
             html += `
                 <div class="film">
                     <img src="${infos.poster}" alt="${titre}">
                     <h3>${titre}</h3>
+                    <div class="jours" style="display: none;">
+                        ${genererJoursHTML(infos.joursDiffusion)}
+                    </div>
                 </div>
             `;
         }
@@ -206,6 +211,7 @@ function afficherFilms(donnees) {
     conteneur.innerHTML = html;
     activerClics();
 }
+
 
 // Construit le HTML des horaires (par cinéma), avec langue (VF/VO), format (4DX/IMAX/3D) et lien de réservation
 function genererHorairesHTML(seances) {
@@ -251,14 +257,45 @@ function activerClics() {
     const films = document.querySelectorAll(".film");
     for (const film of films) {
         const horaires = film.querySelector(".horaires");
-        if (!horaires) {
+        const jours = film.querySelector(".jours");
+        const zoneAOuvrir = horaires || jours; // l'une des deux existe, jamais les deux
+
+        if (!zoneAOuvrir) {
             continue;
         }
+
         film.addEventListener("click", function () {
-            if (horaires.style.display === "none") {
-                horaires.style.display = "block";
+            if (zoneAOuvrir.style.display === "none") {
+                zoneAOuvrir.style.display = "block";
             } else {
-                horaires.style.display = "none";
+                zoneAOuvrir.style.display = "none";
+            }
+        });
+    }
+
+    activerAccordeonJours();
+}
+
+
+function activerAccordeonJours() {
+    const titresJours = document.querySelectorAll(".jour-titre");
+    for (const titreJour of titresJours) {
+        titreJour.addEventListener("click", function (event) {
+            event.stopPropagation(); // empêche ce clic de remonter jusqu'à la carte film
+
+            const jourItem = titreJour.parentElement;
+            const horairesJour = jourItem.querySelector(".jour-horaires");
+            const dejaOuvert = horairesJour.style.display === "block";
+
+            // Ferme tous les jours de ce film avant d'ouvrir le nouveau
+            const conteneurJours = jourItem.parentElement;
+            const tousLesHoraires = conteneurJours.querySelectorAll(".jour-horaires");
+            for (const h of tousLesHoraires) {
+                h.style.display = "none";
+            }
+
+            if (!dejaOuvert) {
+                horairesJour.style.display = "block";
             }
         });
     }
@@ -273,6 +310,29 @@ function reinitialiserFiltresEtTri() {
     document.getElementById("tri").value = "defaut";
     document.getElementById("periode").value = "";
 }
+
+
+function genererJoursHTML(joursDiffusion) {
+    let html = "";
+    const joursTries = Object.keys(joursDiffusion).sort(); // dates au format AAAA-MM-JJ -> tri alphabétique = tri chronologique
+
+    for (const jour of joursTries) {
+        const [annee, mois, jourNum] = jour.split("-");
+        const dateAffichee = `${jourNum}/${mois}/${annee}`;
+
+        html += `
+            <div class="jour-item">
+                <h4 class="jour-titre">${dateAffichee}</h4>
+                <div class="jour-horaires" style="display: none;">
+                    ${genererHorairesHTML(joursDiffusion[jour])}
+                </div>
+            </div>
+        `;
+    }
+    return html;
+}
+
+
 
 // Lancement au chargement de la page
 document.getElementById("jour").value = "";

@@ -133,6 +133,7 @@ def seances():
     return jsonify(films)
 
 
+
 @app.route("/api/films-periode")
 def films_periode():
     semaines = int(request.args.get("semaines", 1))
@@ -140,25 +141,30 @@ def films_periode():
 
     cinemas_param = request.args.get("cinemas")
     if cinemas_param is not None:
-        # paramètre envoyé (même vide = aucun cinéma coché) -> on respecte le choix
         noms_cinemas = cinemas_param.split(",") if cinemas_param else []
     else:
-        # paramètre absent -> comportement par défaut, tous les cinémas
         noms_cinemas = list(CINEMAS.keys())
 
     films = {}
     for i in range(nb_jours):
         jour = (date.today() + timedelta(days=i)).isoformat()
         for nom_cinema in noms_cinemas:
+            print(f"Récupération : {nom_cinema} - {jour}")  # ligne temporaire, à retirer après
             id_cinema = CINEMAS[nom_cinema]
-            infos_films = api.get_movies(id_cinema, jour)
-            for film in infos_films:
-                titre = film["title"]
+            films_du_jour = films_dun_jour(id_cinema, jour)
+
+            for titre, infos in films_du_jour.items():
                 if titre not in films:
                     films[titre] = {
-                        "poster": film["urlPoster"],
-                        "dateSortie": date_sortie_la_plus_ancienne(film["releases"]),
+                        "poster": infos["poster"],
+                        "dateSortie": infos["dateSortie"],
+                        "joursDiffusion": {}
                     }
+
+                if jour not in films[titre]["joursDiffusion"]:
+                    films[titre]["joursDiffusion"][jour] = {}
+
+                films[titre]["joursDiffusion"][jour][nom_cinema] = infos["seances"]
 
     return jsonify(films)
 

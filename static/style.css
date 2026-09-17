@@ -55,17 +55,18 @@ p {
     font-family: "Germania One", sans-serif;
 }
 
-.horaires ul {
+
+.horaires ul, .jour-horaires ul {
     list-style: none;
     padding: 0;
 }
 
-.horaires li {
+.horaires li, .jour-horaires li {
     color: #D9A441;
     margin: 4px 0;
 }
 
-.horaires h4 {
+.horaires h4, .jour-horaires h4 {
     margin: 25px 0 0;
     font-size: 0.9rem;
 }
@@ -228,4 +229,15 @@ p {
 
 .etat-chargement p {
     text-align: left;
+}
+
+.jour-titre {
+    margin: 15px 0 5px;
+    font-size: 1rem;
+    color: #f1ce9c;
+    cursor: pointer;
+}
+
+.jour-titre:hover {
+    color: #6dd3d7;
 }
