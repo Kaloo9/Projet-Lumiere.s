@@ -40,25 +40,25 @@ async function chargerFilmsPeriode(semaines) {
     mettreAJourAffichage();
 }
 
-// Affiche/masque la liste de cases à cocher quand on clique sur le bouton "Par cinéma :"
+// Affiche/masque le panneau de filtres quand on clique sur le bouton "Filtres"
 function activerBoutonFiltre() {
     const bouton = document.getElementById("bouton-filtre");
-    const listeCinemas = document.querySelector(".liste-cinemas");
+    const panneau = document.querySelector(".panneau-filtres");
 
     bouton.addEventListener("click", function () {
-        if (listeCinemas.style.display === "none") {
-            listeCinemas.style.display = "block";
+        if (panneau.style.display === "none") {
+            panneau.style.display = "block";
         } else {
-            listeCinemas.style.display = "none";
+            panneau.style.display = "none";
         }
     });
 
     // Ferme la liste si on clique n'importe où ailleurs sur la page
     document.addEventListener("click", function (event) {
-        const clicDansLaListe = listeCinemas.contains(event.target);
+        const clicDansLaListe = panneau.contains(event.target);
         const clicSurLeBouton = bouton.contains(event.target);
         if (!clicDansLaListe && !clicSurLeBouton) {
-            listeCinemas.style.display = "none";
+            panneau.style.display = "none";
         }
     });
 }
@@ -66,7 +66,7 @@ function activerBoutonFiltre() {
 // À chaque case cochée/décochée : en mode période on relance un vrai fetch (filtre géré par le serveur),
 // en mode jour on réaffiche juste depuis les données déjà en mémoire
 function activerFiltreCinema() {
-    const cases = document.querySelectorAll(".liste-cinemas input");
+    const cases = document.querySelectorAll("#options-cinema input");
     for (const uneCase of cases) {
         uneCase.addEventListener("change", function () {
             if (modeActuel === "periode") {
@@ -80,7 +80,7 @@ function activerFiltreCinema() {
 
 // Renvoie juste la liste des cinémas actuellement cochés
 function obtenirCinemasCoches() {
-    const cases = document.querySelectorAll(".liste-cinemas input");
+    const cases = document.querySelectorAll("#options-cinema input");
     const cinemasCoches = [];
     for (const uneCase of cases) {
         if (uneCase.checked) {
@@ -303,7 +303,7 @@ function activerAccordeonJours() {
 
 // Remet cases cochées, tri et sélecteur de période à leur état par défaut
 function reinitialiserFiltresEtTri() {
-    const cases = document.querySelectorAll(".liste-cinemas input");
+    const cases = document.querySelectorAll(".panneau-filtres input");
     for (const uneCase of cases) {
         uneCase.checked = true;
     }

@@ -17,14 +17,39 @@
     <div class="barre-outils">
         <div class="filtres">
             <div class="filtre-cinema">
-                <button id="bouton-filtre">Par cinéma :</button>
-                <div class="liste-cinemas" style="display: none;">
-                    <label><input type="checkbox" value="Pathé Bellecour" checked> Pathé Bellecour</label>
-                    <label><input type="checkbox" value="Pathé Carré de Soie" checked> Pathé Carré de Soie</label>
-                    <label><input type="checkbox" value="Institut Lumière" checked> Institut Lumière</label>
-                    <label><input type="checkbox" value="UGC Ciné Cité Lyon Part-Dieu" checked> UGC Part-Dieu</label>
-                    <label><input type="checkbox" value="UGC Ciné Cité Internationale" checked> UGC Cité Internationale</label>
-                    <label><input type="checkbox" value="Cinéma Comœdia" checked> Comœdia</label>
+                <button id="bouton-filtre">Filtres ▾</button>
+                <div class="panneau-filtres" style="display: none;">
+
+                    <div class="section-filtre">
+                        <h4 class="titre-section">Cinéma</h4>
+                        <div class="options-filtre" id="options-cinema">
+                            <label><input type="checkbox" value="Pathé Bellecour" checked> Pathé Bellecour</label>
+                            <label><input type="checkbox" value="Pathé Carré de Soie" checked> Pathé Carré de Soie</label>
+                            <label><input type="checkbox" value="Institut Lumière" checked> Institut Lumière</label>
+                            <label><input type="checkbox" value="UGC Ciné Cité Lyon Part-Dieu" checked> UGC Part-Dieu</label>
+                            <label><input type="checkbox" value="UGC Ciné Cité Internationale" checked> UGC Cité Internationale</label>
+                            <label><input type="checkbox" value="Cinéma Comœdia" checked> Comœdia</label>
+                        </div>
+                    </div>
+
+                    <div class="section-filtre">
+                        <h4 class="titre-section">Langue</h4>
+                        <div class="options-filtre" id="options-langue">
+                            <label><input type="checkbox" value="VO" checked> VO</label>
+                            <label><input type="checkbox" value="VF" checked> VF</label>
+                        </div>
+                    </div>
+
+                    <div class="section-filtre">
+                        <h4 class="titre-section">Format</h4>
+                        <div class="options-filtre" id="options-format">
+                            <label><input type="checkbox" value="Standard" checked> Standard</label>
+                            <label><input type="checkbox" value="3D" checked> 3D</label>
+                            <label><input type="checkbox" value="IMAX" checked> IMAX</label>
+                            <label><input type="checkbox" value="4DX" checked> 4DX</label>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 

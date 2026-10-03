@@ -10,6 +10,7 @@ body {
     gap: 20px;
     padding: 20px;
     margin-top: 20px;
+    align-items: start;   /* chaque carte garde sa propre hauteur au lieu de s'étirer */
 }
 
 
@@ -69,6 +70,7 @@ p {
 .horaires h4, .jour-horaires h4 {
     margin: 25px 0 0;
     font-size: 0.9rem;
+    color: #6dd3d7;   /* cinéma = turquoise, dans les deux modes */
 }
 
 .entete {
@@ -136,7 +138,7 @@ p {
     box-shadow: 0 0 10px #5EEAD4;
 }
 
-.liste-cinemas {
+.panneau-filtres {
     position: absolute;    /* sort du flux, se positionne par rapport à .filtre-cinema (son ancêtre relative) */
     top: 110%;             /* juste sous le bouton */
     left: 0;
@@ -145,22 +147,25 @@ p {
     border-radius: 8px;
     padding: 8px;
     min-width: 194px;
-    display: flex;
-    flex-direction: column; /* une case à cocher par ligne */
-    gap: 6px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-.liste-cinemas label {
+.panneau-filtres label {
     color: #f1ce9c;
     font-size: 0.9rem;
     cursor: pointer;
     white-space: nowrap; /* évite que "UGC Cité Internationale" se coupe sur 2 lignes */
 }
 
-.liste-cinemas input {
+.panneau-filtres input {
     accent-color: #5EEAD4; /* turquoise néon de la palette, cocher */
     cursor: pointer;
+}
+
+/* Chaque case sur sa propre ligne */
+.panneau-filtres label {
+    display: block;     /* à ajouter dans ta règle existante */
+    margin: 4px 0;
 }
 
 
@@ -177,16 +182,18 @@ p {
     cursor: pointer;
 }
 
-.horaires li a {
+/* Liens de réservation : même style en mode jour (.horaires) et période (.panneau-filtres) */
+.horaires li a, .jour-horaires li a {
     color: inherit;
     text-decoration: none;
     font-family: inherit;
 }
 
-.horaires li a:hover {
+.horaires li a:hover, .jour-horaires li a:hover {
     color: #6dd3d7;
     text-decoration: underline;
 }
+
 
 .recherche-date {
     display: flex;
@@ -231,13 +238,45 @@ p {
     text-align: left;
 }
 
+/* Niveau 2 — la date : une petite barre cliquable */
 .jour-titre {
-    margin: 15px 0 5px;
-    font-size: 1rem;
+    margin: 10px 0 0;
+    padding: 6px 10px;
+    background-color: #2A4470;   /* un cran plus clair que la carte (#1F3355) */
+    border-radius: 6px;
+    font-size: 0.95rem;
     color: #f1ce9c;
     cursor: pointer;
 }
 
 .jour-titre:hover {
+    color: #6dd3d7;
+}
+
+/* Les séances d'un jour : décalées, avec un trait turquoise qui les "rattache" à la date */
+.jour-horaires {
+    margin-left: 6px;
+    padding-left: 12px;
+    border-left: 2px solid #6dd3d7;
+}
+
+/* Niveau 3 — le cinéma : turquoise, plus petit, moins espacé qu'en mode jour */
+.jour-horaires h4 {
+    margin: 12px 0 0;
+    font-size: 0.85rem;
+}
+
+/* Titre de section : même esprit que les barres de date du mode période */
+.titre-section {
+    margin: 8px 0 4px;
+    padding: 4px 8px;
+    background-color: #2A4470;
+    border-radius: 6px;
+    color: #f1ce9c;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.titre-section:hover {
     color: #6dd3d7;
 }

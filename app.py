@@ -51,7 +51,20 @@ def get_seances_detaillees(id_cinema, date_str):
                             "lienReservation": lien_reservation(seance.get("data", {})),
                         })
 
-            resultat.append({"title": titre, "showtimes": seances})
+            # L'affiche et les dates de sortie sont déjà dans element["movie"] :
+            # plus besoin d'appeler api.get_movies() (qui plante si un film n'a aucune sortie)
+            film = element["movie"]
+
+            affiche = None
+            if film.get("poster"):                  # poster peut être None
+                affiche = film["poster"].get("url")
+
+            resultat.append({
+                "title": titre,
+                "poster": affiche,
+                "dateSortie": date_sortie_la_plus_ancienne(film.get("releases") or []),  # "or []" : liste vide si None
+                "showtimes": seances,
+            })
 
     return resultat
 
@@ -69,13 +82,14 @@ def lien_reservation(data):
 
 
 def date_sortie_la_plus_ancienne(releases):
-    # releases : liste de dicts {"releaseName": ..., "releaseDate": ...}
-    # releaseDate peut être None (pas renseigné) -> on l'ignore avant de chercher le minimum.
-    dates = [r["releaseDate"] for r in releases if r["releaseDate"] is not None]
+    # releases : liste brute d'Allociné, chaque élément a "releaseDate" = {"date": "AAAA-MM-JJ"} ou None
+    dates = []
+    for r in releases:
+        if r.get("releaseDate") and r["releaseDate"].get("date"):
+            dates.append(r["releaseDate"]["date"])
     if dates:
         return min(dates)
-    return None
-
+    return None   # liste vide -> pas de plantage, juste "pas de date"
 
 
 def films_dun_jour(id_cinema, jour):
@@ -86,22 +100,13 @@ def films_dun_jour(id_cinema, jour):
         if datetime.now() - en_cache["recupere_le"] < DUREE_CACHE:
             return en_cache["donnees"]  # encore frais, pas besoin de rappeler Allociné
 
-    # Pas en cache (ou périmé) -> on va chercher en direct, comme avant
-    horaires = get_seances_detaillees(id_cinema, jour)
-    infos_films = api.get_movies(id_cinema, jour)
-
-    affiches = {}
-    dates_sortie = {}
-    for film in infos_films:
-        affiches[film["title"]] = film["urlPoster"]
-        dates_sortie[film["title"]] = date_sortie_la_plus_ancienne(film["releases"])
+    horaires = get_seances_detaillees(id_cinema, jour)  # contient maintenant aussi poster + dateSortie
 
     resultat = {}
     for entree in horaires:
-        titre = entree["title"]
-        resultat[titre] = {
-            "poster": affiches.get(titre),
-            "dateSortie": dates_sortie.get(titre),
+        resultat[entree["title"]] = {
+            "poster": entree["poster"],
+            "dateSortie": entree["dateSortie"],
             "seances": entree["showtimes"],
         }
 
@@ -149,7 +154,7 @@ def films_periode():
     for i in range(nb_jours):
         jour = (date.today() + timedelta(days=i)).isoformat()
         for nom_cinema in noms_cinemas:
-            print(f"Récupération : {nom_cinema} - {jour}")  # ligne temporaire, à retirer après
+            print(f"Récupération : {nom_cinema} - {jour}")  # gardé volontairement : montre la progression des longues requêtes
             id_cinema = CINEMAS[nom_cinema]
             films_du_jour = films_dun_jour(id_cinema, jour)
 
