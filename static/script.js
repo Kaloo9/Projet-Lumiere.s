@@ -63,6 +63,27 @@ function activerBoutonFiltre() {
     });
 }
 
+// Clic sur un titre de section (Cinéma / Langue / Format) -> ouvre/ferme ses cases, indépendamment des autres
+function activerDepliantsFiltres() {
+    const titres = document.querySelectorAll(".titre-section");
+    for (const titre of titres) {
+        titre.addEventListener("click", function () {
+            // On remonte à la section qui contient ce titre, puis on y cherche ses cases
+            const options = titre.parentElement.querySelector(".options-filtre");
+
+                        const fleche = titre.querySelector(".fleche");
+
+            if (options.style.display === "none") {
+                options.style.display = "block";
+                fleche.textContent = "▾";   // ouvert
+            } else {
+                options.style.display = "none";
+                fleche.textContent = "▸";   // fermé
+            }
+        });
+    }
+}
+
 // À chaque case cochée/décochée : en mode période on relance un vrai fetch (filtre géré par le serveur),
 // en mode jour on réaffiche juste depuis les données déjà en mémoire
 function activerFiltreCinema() {
@@ -78,43 +99,125 @@ function activerFiltreCinema() {
     }
 }
 
-// Renvoie juste la liste des cinémas actuellement cochés
-function obtenirCinemasCoches() {
-    const cases = document.querySelectorAll("#options-cinema input");
-    const cinemasCoches = [];
+
+// Langue / format : toujours filtrés dans le navigateur -> on réaffiche depuis les données en mémoire, sans fetch
+function activerFiltresLangueFormat() {
+    const cases = document.querySelectorAll("#options-langue input, #options-format input");
     for (const uneCase of cases) {
-        if (uneCase.checked) {
-            cinemasCoches.push(uneCase.value);
-        }
+        uneCase.addEventListener("change", function () {
+            mettreAJourAffichage();
+        });
     }
-    return cinemasCoches;
 }
 
-// Ne garde, parmi les films en mémoire (dernieresDonnees), que ceux présents dans au moins un cinéma coché
+
+// Renvoie la liste des valeurs cochées dans un groupe de cases, ex: obtenirValeursCochees("#options-langue") -> ["VO", "VF"]
+function obtenirValeursCochees(idGroupe) {
+    const cases = document.querySelectorAll(`${idGroupe} input`);
+    const valeurs = [];
+    for (const uneCase of cases) {
+        if (uneCase.checked) {
+            valeurs.push(uneCase.value);
+        }
+    }
+    return valeurs;
+}
+
+// Renvoie juste la liste des cinémas actuellement cochés
+function obtenirCinemasCoches() {
+    return obtenirValeursCochees("#options-cinema");
+}
+
+// Filtre un objet { cinéma: [séances] } : ne garde que les cinémas cochés, et dans chacun
+// que les séances dont la langue ET le format sont cochés. Un cinéma sans séance restante disparaît.
+function filtrerSeancesParCinema(seancesParCinema, cinemasCoches, languesCochees, formatsCoches) {
+    const resultat = {};
+
+    for (const [nomCinema, seances] of Object.entries(seancesParCinema)) {
+        if (!cinemasCoches.includes(nomCinema)) {
+            continue; // cinéma décoché -> on passe directement au cinéma suivant
+        }
+
+        const seancesGardees = [];
+        for (const seance of seances) {
+            if (languesCochees.includes(langueDe(seance)) && formatsCoches.includes(formatDe(seance))) {
+                seancesGardees.push(seance);
+            }
+        }
+
+        if (seancesGardees.length > 0) {   // .length = nombre d'éléments dans la liste
+            resultat[nomCinema] = seancesGardees;
+        }
+    }
+    return resultat;
+}
+
+
+// Ne garde, parmi les films en mémoire, que ceux qui ont encore au moins une séance après filtrage
 function obtenirFilmsFiltres() {
     const cinemasCoches = obtenirCinemasCoches();
+    const languesCochees = obtenirValeursCochees("#options-langue");
+    const formatsCoches = obtenirValeursCochees("#options-format");
 
     const filmsFiltres = {};
     for (const [titre, infos] of Object.entries(dernieresDonnees)) {
-        for (const nomCinema of Object.keys(infos.seances)) {
-            if (cinemasCoches.includes(nomCinema)) {
-                filmsFiltres[titre] = infos;
-                break;
-            }
+        const seancesFiltrees = filtrerSeancesParCinema(infos.seances, cinemasCoches, languesCochees, formatsCoches);
+
+        if (Object.keys(seancesFiltrees).length > 0) {   // reste-t-il au moins un cinéma ?
+            // NOUVEL objet : mêmes infos que le film, mais seulement avec les séances gardées
+            filmsFiltres[titre] = {
+                poster: infos.poster,
+                dateSortie: infos.dateSortie,
+                seances: seancesFiltrees,
+            };
         }
     }
     return filmsFiltres;
 }
 
-// Trie un objet de films (titre -> infos) par date de sortie, selon l'ordre choisi dans le <select>
-function trierFilms(filmsObjet, ordre) {
-    if (ordre === "defaut") {
-        return filmsObjet;
-    }
+// Mode période : même filtrage qu'en mode jour, mais appliqué à chaque jour de chaque film.
+// Un jour sans séance restante disparaît, puis un film sans jour restant disparaît.
+function obtenirFilmsPeriodeFiltres() {
+    const cinemasCoches = obtenirCinemasCoches();
+    const languesCochees = obtenirValeursCochees("#options-langue");
+    const formatsCoches = obtenirValeursCochees("#options-format");
 
-    const entrees = Object.entries(filmsObjet);
+    const filmsFiltres = {};
+    for (const [titre, infos] of Object.entries(dernieresDonnees)) {
+
+        const joursFiltres = {};
+        for (const [jour, seancesDuJour] of Object.entries(infos.joursDiffusion)) {
+            // seancesDuJour a la forme { cinéma: [séances] } -> on réutilise la fonction de l'étape 4
+            const seancesFiltrees = filtrerSeancesParCinema(seancesDuJour, cinemasCoches, languesCochees, formatsCoches);
+
+            if (Object.keys(seancesFiltrees).length > 0) {   // reste-t-il au moins un cinéma ce jour-là ?
+                joursFiltres[jour] = seancesFiltrees;
+            }
+        }
+
+        if (Object.keys(joursFiltres).length > 0) {   // reste-t-il au moins un jour ?
+            // NOUVEL objet, comme à l'étape 4 : dernieresDonnees reste intact
+            filmsFiltres[titre] = {
+                poster: infos.poster,
+                dateSortie: infos.dateSortie,
+                joursDiffusion: joursFiltres,
+            };
+        }
+    }
+    return filmsFiltres;
+}
+
+// Trie un objet de films (titre -> infos) selon l'ordre choisi dans le <select>
+function trierFilms(filmsObjet, ordre) {
+    const entrees = Object.entries(filmsObjet); // tableau [[titre, infos], ...] pour pouvoir utiliser .sort()
 
     entrees.sort(function (a, b) {
+        // Ordre alphabétique (choix par défaut) : on compare les titres, a[0] et b[0]
+        if (ordre === "defaut") {
+            return a[0].localeCompare(b[0], "fr"); // "fr" : É est rangé avec les E, À avec les A
+        }
+
+        // Sinon : tri par date de sortie, films sans date toujours en premier
         const dateA = a[1].dateSortie;
         const dateB = b[1].dateSortie;
 
@@ -136,18 +239,21 @@ function trierFilms(filmsObjet, ordre) {
     return filmsTries;
 }
 
-// Fonction centrale : filtre (seulement en mode jour), trie, puis affiche
-function mettreAJourAffichage() {
-    let films = dernieresDonnees;
 
+// Fonction centrale : filtre (selon le mode), trie, puis affiche
+function mettreAJourAffichage() {
+    let films;
     if (modeActuel === "jour") {
-        films = obtenirFilmsFiltres(); // en mode "periode", le backend a déjà filtré par cinéma
+        films = obtenirFilmsFiltres();
+    } else {
+        films = obtenirFilmsPeriodeFiltres();
     }
 
     const ordre = document.getElementById("tri").value;
     const filmsTries = trierFilms(films, ordre);
     afficherFilms(filmsTries);
 }
+
 
 // Redéclenche l'affichage dès qu'on change l'option choisie dans le <select> de tri
 function activerTri() {
@@ -208,8 +314,38 @@ function afficherFilms(donnees) {
         }
     }
 
+    // Plus aucun film après filtrage -> un message plutôt qu'une page vide (qui ressemblerait à un bug)
+    if (html === "") {
+        html = '<div class="aucun-resultat"><p>Aucune séance ne correspond à ta recherche.</p></div>';
+    }
+
     conteneur.innerHTML = html;
     activerClics();
+}
+
+// Renvoie "VO" ou "VF" pour une séance (DUBBED et le rare LOCAL comptent comme VF)
+function langueDe(seance) {
+    if (seance.diffusionVersion === "ORIGINAL") {
+        return "VO";
+    }
+    return "VF";
+}
+
+// Renvoie "4DX", "IMAX", "3D" ou "Standard" pour une séance
+// (mêmes valeurs que les cases à cocher du filtre Format)
+function formatDe(seance) {
+    const infosTexte = `${seance.projection} ${seance.experience}`;
+
+    if (infosTexte.includes("4DX")) {
+        return "4DX";
+    }
+    if (infosTexte.includes("IMAX")) {
+        return "IMAX";
+    }
+    if (infosTexte.includes("3D")) {
+        return "3D";
+    }
+    return "Standard";
 }
 
 
@@ -221,22 +357,12 @@ function genererHorairesHTML(seances) {
         for (const seance of horaires) {
             const heure = seance.startsAt.slice(11, 16);
 
-            let langue;
-            if (seance.diffusionVersion === "ORIGINAL") {
-                langue = "VO";
-            } else {
-                langue = "VF";
-            }
-
-            const infosTexte = `${seance.projection} ${seance.experience}`;
+            const langue = langueDe(seance);
+            const format = formatDe(seance);
 
             let texteFormat = "";
-            if (infosTexte.includes("4DX")) {
-                texteFormat = " — 4DX";
-            } else if (infosTexte.includes("IMAX")) {
-                texteFormat = " — IMAX";
-            } else if (infosTexte.includes("3D")) {
-                texteFormat = " — 3D";
+            if (format !== "Standard") {
+                texteFormat = ` — ${format}`;   // on n'affiche rien pour une séance standard, comme avant
             }
 
             let contenuSeance = `${heure} — ${langue}${texteFormat}`;
@@ -341,5 +467,7 @@ chargerSeances();
 activerSelecteurJour();
 activerSelecteurPeriode();
 activerBoutonFiltre();
+activerDepliantsFiltres();
 activerFiltreCinema();
+activerFiltresLangueFormat();
 activerTri();

@@ -17,12 +17,12 @@
     <div class="barre-outils">
         <div class="filtres">
             <div class="filtre-cinema">
-                <button id="bouton-filtre">Filtres ▾</button>
+                <button id="bouton-filtre"><span>Filtres</span><span>▾</span></button>
                 <div class="panneau-filtres" style="display: none;">
 
                     <div class="section-filtre">
-                        <h4 class="titre-section">Cinéma</h4>
-                        <div class="options-filtre" id="options-cinema">
+                        <h4 class="titre-section"><span>Cinéma</span><span class="fleche">▸</span></h4>
+                        <div class="options-filtre" id="options-cinema" style="display: none;">
                             <label><input type="checkbox" value="Pathé Bellecour" checked> Pathé Bellecour</label>
                             <label><input type="checkbox" value="Pathé Carré de Soie" checked> Pathé Carré de Soie</label>
                             <label><input type="checkbox" value="Institut Lumière" checked> Institut Lumière</label>
@@ -33,16 +33,16 @@
                     </div>
 
                     <div class="section-filtre">
-                        <h4 class="titre-section">Langue</h4>
-                        <div class="options-filtre" id="options-langue">
+                        <h4 class="titre-section"><span>Langue</span><span class="fleche">▸</span></h4>
+                        <div class="options-filtre" id="options-langue" style="display: none;">
                             <label><input type="checkbox" value="VO" checked> VO</label>
                             <label><input type="checkbox" value="VF" checked> VF</label>
                         </div>
                     </div>
 
                     <div class="section-filtre">
-                        <h4 class="titre-section">Format</h4>
-                        <div class="options-filtre" id="options-format">
+                        <h4 class="titre-section"><span>Format</span><span class="fleche">▸</span></h4>
+                        <div class="options-filtre" id="options-format" style="display: none;">
                             <label><input type="checkbox" value="Standard" checked> Standard</label>
                             <label><input type="checkbox" value="3D" checked> 3D</label>
                             <label><input type="checkbox" value="IMAX" checked> IMAX</label>
@@ -53,17 +53,20 @@
                 </div>
             </div>
 
-            <select id="tri">
-                <option value="defaut">Trier par...</option>
-                <option value="sortie-asc">Date de sortie (croissant)</option>
-                <option value="sortie-desc">Date de sortie (décroissant)</option>
-            </select>
+            <div class="tri-conteneur">
+                <select id="tri">
+                    <option value="defaut">Trier par...</option>
+                    <option value="sortie-asc">Date de sortie (croissant)</option>
+                    <option value="sortie-desc">Date de sortie (décroissant)</option>
+                </select>
+                <span class="fleche-tri">▾</span>
+            </div>
         </div>
 
         <div class="recherche-date">
             <div class="selecteur-jour">
                 <label for="jour">Voir les séances du :</label>
-                <input type="date" id="jour">
+                <input type="date" id="jour" min="{{ aujourdhui }}">
             </div>
 
             <div class="selecteur-periode">

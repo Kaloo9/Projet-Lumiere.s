@@ -121,9 +121,7 @@ p {
 }
 
 #bouton-filtre {
-    text-align: left;
     padding: 8px 20px;
-    min-width: 210px;
     background-color: #1F3355;
     color: #6dd3d7;
     border: none;
@@ -132,6 +130,16 @@ p {
     letter-spacing: 1px;
     font-family: "Germania One", sans-serif;
     cursor: pointer;
+    display: flex;
+    justify-content: space-between;   /* "Filtres" collé à gauche, ▾ collé à droite */
+    align-items: center;
+}
+
+/* Même taille pour les deux boutons de la barre d'outils */
+#bouton-filtre, #tri {
+    width: 210px;
+    height: 38px;
+    box-sizing: border-box; /* padding inclus dans les 210px de large ET les 38px de haut */
 }
 
 #bouton-filtre:hover {
@@ -180,7 +188,25 @@ p {
     letter-spacing: 1px;
     font-family: "Germania One", sans-serif;
     cursor: pointer;
+    appearance: none;      /* cache la flèche dessinée par le navigateur */
+    padding-right: 45px;   /* garde de la place à droite pour notre flèche */
 }
+
+.tri-conteneur {
+    position: relative;    /* point de repère pour placer la flèche */
+}
+
+.fleche-tri {
+    position: absolute;
+    right: 20px;                    /* même marge que dans le bouton Filtres */
+    top: 50%;
+    transform: translateY(-50%);    /* centrée verticalement */
+    color: #6dd3d7;
+    font-family: "Germania One", sans-serif;
+    font-size: 1rem;
+    pointer-events: none;           /* les clics "traversent" la flèche jusqu'au select */
+}
+
 
 /* Liens de réservation : même style en mode jour (.horaires) et période (.panneau-filtres) */
 .horaires li a, .jour-horaires li a {
@@ -230,11 +256,11 @@ p {
     font-size: 0.8rem;
 }
 
-.etat-chargement {
+.etat-chargement, .aucun-resultat {
     grid-column: 1 / -1; /* prend toute la largeur de la grille, pas juste une colonne */
 }
 
-.etat-chargement p {
+.etat-chargement p, .aucun-resultat p {
     text-align: left;
 }
 
@@ -275,6 +301,8 @@ p {
     color: #f1ce9c;
     font-size: 0.9rem;
     cursor: pointer;
+    display: flex;
+    justify-content: space-between;
 }
 
 .titre-section:hover {

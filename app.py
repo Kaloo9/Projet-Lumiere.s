@@ -116,7 +116,8 @@ def films_dun_jour(id_cinema, jour):
 
 @app.route("/")
 def accueil():
-    return render_template("index.html")
+    # On transmet la date du jour au HTML, pour bloquer les dates passées dans le calendrier
+    return render_template("index.html", aujourdhui=date.today().isoformat())
 
 
 @app.route("/api/seances")
