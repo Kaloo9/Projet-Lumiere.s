@@ -46,7 +46,7 @@ for s in seances:
     print(s)'''
 
 
-from allocineAPI.allocineAPI import allocineAPI, URLs
+'''from allocineAPI.allocineAPI import allocineAPI, URLs
 from datetime import date
 import json
 
@@ -57,4 +57,23 @@ today = date.today().isoformat()
 data = api._get_json_request(URLs.showtime_url("P0036", today, 1))
 premier_film = data["results"][0]
 
-print(json.dumps(premier_film, indent=2, ensure_ascii=False))
+print(json.dumps(premier_film, indent=2, ensure_ascii=False))'''
+
+from allocineAPI.allocineAPI import allocineAPI, URLs
+from datetime import date
+
+api = allocineAPI()
+
+# Même requête que get_seances_detaillees(), pour l'Institut Lumière, aujourd'hui
+data = api._get_json_request(URLs.showtime_url("P0036", date.today().isoformat(), 1))
+
+# On regarde les 2 premiers films reçus
+for element in data["results"][:2]:
+    film = element["movie"]
+    if film is None:
+        continue
+    print("Titre :", film.get("title"))
+    print("  Toutes les infos disponibles :", sorted(film.keys()))
+    print("  id :", film.get("id"), "| internalId :", film.get("internalId"))
+    print("  stats (notes ?) :", film.get("stats"))
+    print()

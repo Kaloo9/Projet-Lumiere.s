@@ -308,3 +308,35 @@ p {
 .titre-section:hover {
     color: #6dd3d7;
 }
+
+.etat-chargement, .aucun-resultat, .message-erreur {
+    grid-column: 1 / -1; /* prend toute la largeur de la grille, pas juste une colonne */
+}
+
+.etat-chargement p, .aucun-resultat p, .message-erreur p {
+    text-align: left;
+}
+
+/* Remplace l'affiche quand un film n'en a pas : même taille qu'une vraie affiche */
+.sans-affiche {
+    height: 260px;              /* même hauteur que .film img */
+    border-radius: 6px;
+    background-color: #2A4470;  /* le bleu un cran plus clair, déjà utilisé pour les barres de date */
+    color: #f1ce9c;
+    font-family: "Germania One", sans-serif;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: center;    /* texte centré horizontalement */
+    align-items: center;        /* ... et verticalement */
+}
+
+/* Titre de film cliquable : garde l'apparence d'un titre, turquoise souligné au survol */
+.lien-film {
+    color: inherit;
+    text-decoration: none;
+}
+
+.lien-film:hover {
+    color: #6dd3d7;
+    text-decoration: underline;
+}

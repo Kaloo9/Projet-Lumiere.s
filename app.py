@@ -59,10 +59,17 @@ def get_seances_detaillees(id_cinema, date_str):
             if film.get("poster"):                  # poster peut être None
                 affiche = film["poster"].get("url")
 
+            # Lien vers la fiche du film sur Allociné, construit à partir de son identifiant
+            id_allocine = film.get("internalId")
+            lien_allocine = None
+            if id_allocine:
+                lien_allocine = f"https://www.allocine.fr/film/fichefilm_gen_cfilm={id_allocine}.html"
+            
             resultat.append({
                 "title": titre,
                 "poster": affiche,
-                "dateSortie": date_sortie_la_plus_ancienne(film.get("releases") or []),  # "or []" : liste vide si None
+                "dateSortie": date_sortie_la_plus_ancienne(film.get("releases") or []),
+                "lienAllocine": lien_allocine,
                 "showtimes": seances,
             })
 
@@ -100,13 +107,14 @@ def films_dun_jour(id_cinema, jour):
         if datetime.now() - en_cache["recupere_le"] < DUREE_CACHE:
             return en_cache["donnees"]  # encore frais, pas besoin de rappeler Allociné
 
-    horaires = get_seances_detaillees(id_cinema, jour)  # contient maintenant aussi poster + dateSortie
+    horaires = get_seances_detaillees(id_cinema, jour)  # contient maintenant aussi poster, dateSortie et lienAllocine
 
     resultat = {}
     for entree in horaires:
         resultat[entree["title"]] = {
             "poster": entree["poster"],
             "dateSortie": entree["dateSortie"],
+            "lienAllocine": entree["lienAllocine"],
             "seances": entree["showtimes"],
         }
 
@@ -132,6 +140,7 @@ def seances():
                 films[titre] = {
                     "poster": infos["poster"],
                     "dateSortie": infos["dateSortie"],
+                    "lienAllocine": infos["lienAllocine"],
                     "seances": {}
                 }
             films[titre]["seances"][nom_cinema] = infos["seances"]
@@ -164,6 +173,7 @@ def films_periode():
                     films[titre] = {
                         "poster": infos["poster"],
                         "dateSortie": infos["dateSortie"],
+                        "lienAllocine": infos["lienAllocine"],
                         "joursDiffusion": {}
                     }
 

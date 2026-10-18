@@ -10,6 +10,11 @@ function afficherChargement(avecAvertissement) {
     document.getElementById("seances").innerHTML = html;
 }
 
+// Message affiché quand le chargement a échoué (serveur arrêté, connexion coupée, Allociné qui ne répond pas...)
+function afficherErreur() {
+    document.getElementById("seances").innerHTML =
+        '<div class="message-erreur"><p>Impossible de récupérer les séances pour le moment. Réessaie dans quelques instants.</p></div>';
+}
 
 // Va chercher les séances d'un jour précis (ou aujourd'hui si absent)
 async function chargerSeances(jour) {
@@ -18,11 +23,26 @@ async function chargerSeances(jour) {
     if (jour) {
         url += `?jour=${jour}`;
     }
-    const reponse = await fetch(url);
-    const donnees = await reponse.json();
-    dernieresDonnees = donnees;
-    modeActuel = "jour";
-    mettreAJourAffichage();
+
+    try {
+        const reponse = await fetch(url);
+
+        // Cas 2 : le serveur a répondu, mais avec une erreur (500, 404...) -> fetch ne le signale pas tout seul
+        if (!reponse.ok) {
+            afficherErreur();
+            return; // on s'arrête là : pas de données à afficher
+        }
+
+        const donnees = await reponse.json();
+        dernieresDonnees = donnees;
+        modeActuel = "jour";
+        mettreAJourAffichage();
+
+    } catch (erreur) {
+        // Cas 1 : pas de réponse du tout (serveur arrêté, connexion coupée...)
+        console.error(erreur); // garde le détail technique dans la console (F12), utile pour déboguer
+        afficherErreur();
+    }
 }
 
 // Va chercher les films d'une période (1/2/3 semaines), pour les cinémas cochés
@@ -32,12 +52,23 @@ async function chargerFilmsPeriode(semaines) {
     const cinemasCoches = obtenirCinemasCoches();
     const cinemasParam = encodeURIComponent(cinemasCoches.join(","));
 
-    const reponse = await fetch(`/api/films-periode?semaines=${semaines}&cinemas=${cinemasParam}`);
-    const donnees = await reponse.json();
+    try {
+        const reponse = await fetch(`/api/films-periode?semaines=${semaines}&cinemas=${cinemasParam}`);
 
-    dernieresDonnees = donnees;
-    modeActuel = "periode";
-    mettreAJourAffichage();
+        if (!reponse.ok) {
+            afficherErreur();
+            return;
+        }
+
+        const donnees = await reponse.json();
+        dernieresDonnees = donnees;
+        modeActuel = "periode";
+        mettreAJourAffichage();
+
+    } catch (erreur) {
+        console.error(erreur);
+        afficherErreur();
+    }
 }
 
 // Affiche/masque le panneau de filtres quand on clique sur le bouton "Filtres"
@@ -168,6 +199,7 @@ function obtenirFilmsFiltres() {
             filmsFiltres[titre] = {
                 poster: infos.poster,
                 dateSortie: infos.dateSortie,
+                lienAllocine: infos.lienAllocine,
                 seances: seancesFiltrees,
             };
         }
@@ -200,6 +232,7 @@ function obtenirFilmsPeriodeFiltres() {
             filmsFiltres[titre] = {
                 poster: infos.poster,
                 dateSortie: infos.dateSortie,
+                lienAllocine: infos.lienAllocine,
                 joursDiffusion: joursFiltres,
             };
         }
@@ -283,6 +316,23 @@ function activerSelecteurPeriode() {
     });
 }
 
+// Renvoie le HTML de l'affiche d'un film, ou un bloc de remplacement s'il n'en a pas (poster === null)
+function genererAfficheHTML(titre, poster) {
+    if (poster) {
+        return `<img src="${poster}" alt="${titre}">`;
+    }
+    return '<div class="sans-affiche">Affiche indisponible</div>';
+}
+
+// Renvoie le titre du film, cliquable vers sa fiche Allociné s'il a un lien
+function genererTitreHTML(titre, lien) {
+    if (lien) {
+        return `<h3><a class="lien-film" href="${lien}" target="_blank" rel="noopener">${titre}</a></h3>`;
+    }
+    return `<h3>${titre}</h3>`;
+}
+
+
 // Construit la grille de films (affiche + titre) et l'injecte dans le DOM
 function afficherFilms(donnees) {
     const conteneur = document.getElementById("seances");
@@ -293,8 +343,8 @@ function afficherFilms(donnees) {
             // Mode jour : comportement inchangé
             html += `
                 <div class="film">
-                    <img src="${infos.poster}" alt="${titre}">
-                    <h3>${titre}</h3>
+                    ${genererAfficheHTML(titre, infos.poster)}
+                    ${genererTitreHTML(titre, infos.lienAllocine)}
                     <div class="horaires" style="display: none;">
                         ${genererHorairesHTML(infos.seances)}
                     </div>
@@ -304,8 +354,8 @@ function afficherFilms(donnees) {
             // Mode période : liste des jours où le film passe
             html += `
                 <div class="film">
-                    <img src="${infos.poster}" alt="${titre}">
-                    <h3>${titre}</h3>
+                    ${genererAfficheHTML(titre, infos.poster)}
+                    ${genererTitreHTML(titre, infos.lienAllocine)}
                     <div class="jours" style="display: none;">
                         ${genererJoursHTML(infos.joursDiffusion)}
                     </div>
@@ -390,12 +440,28 @@ function activerClics() {
             continue;
         }
 
-        film.addEventListener("click", function () {
-            if (zoneAOuvrir.style.display === "none") {
-                zoneAOuvrir.style.display = "block";
-            } else {
-                zoneAOuvrir.style.display = "none";
+                film.addEventListener("click", function () {
+            // 1. Ce film était-il déjà ouvert ?
+            const dejaOuvert = zoneAOuvrir.style.display === "block";
+
+            // 2. On referme tout : horaires (mode jour) ET listes de jours (mode période) de tous les films
+            const toutesLesZones = document.querySelectorAll(".horaires, .jours");
+            for (const zone of toutesLesZones) {
+                zone.style.display = "none";
             }
+
+            // 3. On rouvre celui cliqué, sauf s'il était déjà ouvert (dans ce cas on voulait le fermer)
+            if (!dejaOuvert) {
+                zoneAOuvrir.style.display = "block";
+            }
+        });
+    }
+
+    // Un clic sur un lien (fiche Allociné, réservation) ouvre le lien sans ouvrir/fermer la carte du film
+    const liens = document.querySelectorAll("#seances a");
+    for (const lien of liens) {
+        lien.addEventListener("click", function (event) {
+            event.stopPropagation();
         });
     }
 
