@@ -46,14 +46,16 @@ h1 {
     font-size: 3.5rem;
     letter-spacing: 2px;
     font-family: "Lobster Two", sans-serif;
+    margin: 4px;
 }
 
 p {
     text-align: center;
     color: #f1ce9c;
-    font-size: 1rem;
+    font-size: 0.8rem;
     letter-spacing: 2px;
     font-family: "Germania One", sans-serif;
+    
 }
 
 

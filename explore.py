@@ -57,7 +57,7 @@ today = date.today().isoformat()
 data = api._get_json_request(URLs.showtime_url("P0036", today, 1))
 premier_film = data["results"][0]
 
-print(json.dumps(premier_film, indent=2, ensure_ascii=False))'''
+print(json.dumps(premier_film, indent=2, ensure_ascii=False))
 
 from allocineAPI.allocineAPI import allocineAPI, URLs
 from datetime import date
@@ -76,4 +76,17 @@ for element in data["results"][:2]:
     print("  Toutes les infos disponibles :", sorted(film.keys()))
     print("  id :", film.get("id"), "| internalId :", film.get("internalId"))
     print("  stats (notes ?) :", film.get("stats"))
-    print()
+    print()'''
+
+import requests
+from datetime import date
+
+url = f"https://www.allocine.fr/_/showtimes/theater-P0036/d-{date.today().isoformat()}/p-1"
+
+# Test 1 : comme la librairie aujourd'hui (carte d'identité par défaut "python-requests")
+r1 = requests.get(url)
+print("Carte par défaut :", r1.status_code)
+
+# Test 2 : Lumi se présente honnêtement, avec son propre nom
+r2 = requests.get(url, headers={"User-Agent": "Lumi/1.0 (projet perso, seances cinema Lyon)"})
+print("Carte Lumi :", r2.status_code)

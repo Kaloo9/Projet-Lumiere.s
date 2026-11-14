@@ -1,6 +1,8 @@
 from flask import Flask, jsonify, render_template, request
 from allocineAPI.allocineAPI import allocineAPI, URLs
 from datetime import date, datetime, timedelta
+import requests
+
 
 DUREE_CACHE = timedelta(hours=1)
 cache_films_jour = {}  # { (id_cinema, jour): {"donnees": ..., "recupere_le": datetime} }
@@ -18,6 +20,19 @@ CINEMAS = {
     "Cinéma Comœdia": "P3757",
 }
 
+# Depuis novembre 2026, Allociné refuse la "carte d'identité" par défaut de Python (python-requests) -> erreur 403.
+# Lumi se présente donc honnêtement, avec son propre nom.
+EN_TETES_ALLOCINE = {"User-Agent": "Lumi/1.0 (projet perso, seances cinema Lyon)"}
+
+def requete_allocine(url):
+    # Remplace api._get_json_request() de la librairie, qui n'envoie aucun en-tête
+    reponse = requests.get(url, headers=EN_TETES_ALLOCINE)
+    if reponse.status_code != 200:
+        raise Exception(f"Erreur Allociné {reponse.status_code}")
+    return reponse.json()
+
+
+
 def get_seances_detaillees(id_cinema, date_str):
     # Comme api.get_showtime(), mais garde en plus "projection" et "experience"
     # (le format de la séance), que la fonction officielle de la librairie jette.
@@ -26,7 +41,7 @@ def get_seances_detaillees(id_cinema, date_str):
     page, totalPages = 0, 1
 
     while page < totalPages:
-        json_data = api._get_json_request(URLs.showtime_url(id_cinema, date_str, page + 1))
+        json_data = requete_allocine(URLs.showtime_url(id_cinema, date_str, page + 1))
         page = int(json_data["pagination"]["page"])
         totalPages = int(json_data["pagination"]["totalPages"])
 
@@ -152,7 +167,11 @@ def seances():
 @app.route("/api/films-periode")
 def films_periode():
     semaines = int(request.args.get("semaines", 1))
-    nb_jours = semaines * 7
+
+    # "N semaines" = la fin de la semaine en cours (jusqu'à dimanche) + N semaines complètes
+    aujourdhui = date.today()
+    jours_restants = 6 - aujourdhui.weekday()   # weekday() : lundi = 0, ..., dimanche = 6
+    nb_jours = jours_restants + 1 + semaines * 7
 
     cinemas_param = request.args.get("cinemas")
     if cinemas_param is not None:
