@@ -4,9 +4,13 @@ from datetime import date, datetime, timedelta
 import requests
 
 
-DUREE_CACHE = timedelta(hours=1)
+DUREE_CACHE = timedelta(hours=6)  # les programmes de cinéma changent peu dans une journée
 cache_films_jour = {}  # { (id_cinema, jour): {"donnees": ..., "recupere_le": datetime} }
 
+# Préchargement : à l'ouverture de Lumi, on remplit le cache avec la période maximale.
+# Mettre False pendant qu'on travaille sur le code (Flask redémarre et vide le cache à chaque sauvegarde).
+PRECHARGEMENT_ACTIF = False
+SEMAINES_MAX = 3
 
 app = Flask(__name__)
 api = allocineAPI()
@@ -23,6 +27,19 @@ CINEMAS = {
 # Depuis novembre 2026, Allociné refuse la "carte d'identité" par défaut de Python (python-requests) -> erreur 403.
 # Lumi se présente donc honnêtement, avec son propre nom.
 EN_TETES_ALLOCINE = {"User-Agent": "Lumi/1.0 (projet perso, seances cinema Lyon)"}
+
+def jours_de_la_periode(semaines):
+    # "N semaines" = la fin de la semaine en cours (jusqu'à dimanche) + N semaines complètes
+    # Renvoie la liste des jours au format "AAAA-MM-JJ"
+    aujourdhui = date.today()
+    jours_restants = 6 - aujourdhui.weekday()   # weekday() : lundi = 0, ..., dimanche = 6
+    nb_jours = jours_restants + 1 + semaines * 7
+
+    jours = []
+    for i in range(nb_jours):
+        jours.append((aujourdhui + timedelta(days=i)).isoformat())
+    return jours
+
 
 def requete_allocine(url):
     # Remplace api._get_json_request() de la librairie, qui n'envoie aucun en-tête
@@ -168,11 +185,6 @@ def seances():
 def films_periode():
     semaines = int(request.args.get("semaines", 1))
 
-    # "N semaines" = la fin de la semaine en cours (jusqu'à dimanche) + N semaines complètes
-    aujourdhui = date.today()
-    jours_restants = 6 - aujourdhui.weekday()   # weekday() : lundi = 0, ..., dimanche = 6
-    nb_jours = jours_restants + 1 + semaines * 7
-
     cinemas_param = request.args.get("cinemas")
     if cinemas_param is not None:
         noms_cinemas = cinemas_param.split(",") if cinemas_param else []
@@ -180,8 +192,7 @@ def films_periode():
         noms_cinemas = list(CINEMAS.keys())
 
     films = {}
-    for i in range(nb_jours):
-        jour = (date.today() + timedelta(days=i)).isoformat()
+    for jour in jours_de_la_periode(semaines):
         for nom_cinema in noms_cinemas:
             print(f"Récupération : {nom_cinema} - {jour}")  # gardé volontairement : montre la progression des longues requêtes
             id_cinema = CINEMAS[nom_cinema]
@@ -202,6 +213,22 @@ def films_periode():
                 films[titre]["joursDiffusion"][jour][nom_cinema] = infos["seances"]
 
     return jsonify(films)
+
+
+@app.route("/api/prechargement")
+def prechargement():
+    # Remplit le cache avec toute la période maximale (6 cinémas), sans rien renvoyer de lourd
+    if not PRECHARGEMENT_ACTIF:
+        return jsonify({"precharge": False})
+
+    jours = jours_de_la_periode(SEMAINES_MAX)
+    for jour in jours:
+        for nom_cinema, id_cinema in CINEMAS.items():
+            print(f"Préchargement : {nom_cinema} - {jour}")
+            films_dun_jour(id_cinema, jour)  # on n'utilise pas le résultat : le but est juste de remplir le cache
+
+    return jsonify({"precharge": True, "nbJours": len(jours)})
+
 
 if __name__ == "__main__":
     app.run(debug=True)

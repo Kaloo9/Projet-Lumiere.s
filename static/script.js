@@ -71,6 +71,22 @@ async function chargerFilmsPeriode(semaines) {
     }
 }
 
+// Demande au serveur de remplir son cache avec toute la période maximale, en silence
+async function prechargerCache() {
+    try {
+        await fetch("/api/prechargement");
+    } catch (erreur) {
+        console.error("Préchargement impossible :", erreur); // pas grave : Lumi marche quand même, juste sans cache
+    }
+}
+
+// Au démarrage : d'abord les séances du jour (affichées au plus vite), PUIS le préchargement
+async function demarrer() {
+    await chargerSeances();  // on ATTEND que les séances du jour soient affichées...
+    prechargerCache();       // ...puis on lance le préchargement SANS l'attendre (pas de await)
+}
+
+
 // Affiche/masque le panneau de filtres quand on clique sur le bouton "Filtres"
 function activerBoutonFiltre() {
     const bouton = document.getElementById("bouton-filtre");
@@ -529,7 +545,7 @@ function genererJoursHTML(joursDiffusion) {
 // Lancement au chargement de la page
 document.getElementById("jour").value = "";
 reinitialiserFiltresEtTri();
-chargerSeances();
+demarrer();
 activerSelecteurJour();
 activerSelecteurPeriode();
 activerBoutonFiltre();
