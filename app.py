@@ -9,7 +9,7 @@ cache_films_jour = {}  # { (id_cinema, jour): {"donnees": ..., "recupere_le": da
 
 # Préchargement : à l'ouverture de Lumi, on remplit le cache avec la période maximale.
 # Mettre False pendant qu'on travaille sur le code (Flask redémarre et vide le cache à chaque sauvegarde).
-PRECHARGEMENT_ACTIF = False
+PRECHARGEMENT_ACTIF = True
 SEMAINES_MAX = 3
 
 app = Flask(__name__)

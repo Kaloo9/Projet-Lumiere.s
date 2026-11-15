@@ -1,5 +1,7 @@
 let dernieresDonnees = null; // mémorise les dernières données reçues du serveur, pour filtrer/trier sans refaire de fetch
 let modeActuel = "jour"; // "jour" ou "periode"
+let filmsPourRecherche = null; // tous les films de la semaine en cours + 3, chargés une seule fois pour la recherche
+
 
 function afficherChargement(avecAvertissement) {
     let html = '<div class="etat-chargement"><p>Chargement des séances...</p>';
@@ -86,6 +88,60 @@ async function demarrer() {
     prechargerCache();       // ...puis on lance le préchargement SANS l'attendre (pas de await)
 }
 
+// Rend un texte "neutre" pour la recherche : minuscules, sans accents, apostrophes et "œ" uniformisés
+// Ex : normaliser("Carmen, l’oiseau rebelle") et normaliser("carmen l'oiseau") deviennent comparables
+function normaliser(texte) {
+    return texte
+        .toLowerCase()
+        .normalize("NFD")                   // sépare chaque lettre de son accent : "é" devient "e" + "´"
+        .replace(/[\u0300-\u036f]/g, "")    // supprime tous les accents ainsi séparés
+        .replace(/[’‘]/g, "'")              // apostrophe typographique ’ -> apostrophe simple '
+        .replace(/œ/g, "oe");               // œ -> oe
+}
+
+
+// Filtre en direct : ne garde que les films dont le titre contient le texte tapé dans la barre de recherche
+async function rechercherFilm() {
+    try {
+        // Première lettre tapée : on charge une seule fois tous les films de la période max (6 cinémas)
+        if (filmsPourRecherche === null) {
+            afficherChargement(true);
+            const reponse = await fetch("/api/films-periode?semaines=3");
+            if (!reponse.ok) {
+                afficherErreur();
+                return;
+            }
+            filmsPourRecherche = await reponse.json();
+        }
+
+        // On lit le texte MAINTENANT (il a pu changer pendant le chargement)
+        const texte = document.getElementById("recherche").value.trim();
+        if (texte === "") {
+            return; // champ vidé entre-temps : rien à chercher
+        }
+
+        const resultats = {};
+        for (const [titre, infos] of Object.entries(filmsPourRecherche)) {
+            if (normaliser(titre).includes(normaliser(texte))) {
+                resultats[titre] = infos;
+            }
+        }
+
+        if (Object.keys(resultats).length === 0) {
+            document.getElementById("seances").innerHTML =
+                `<div class="aucun-resultat"><p>« ${texte} » n'est pas programmé dans tes cinémas pour le moment.</p></div>`;
+            return;
+        }
+
+        dernieresDonnees = resultats;
+        modeActuel = "recherche";
+        mettreAJourAffichage();
+
+    } catch (erreur) {
+        console.error(erreur);
+        afficherErreur();
+    }
+}
 
 // Affiche/masque le panneau de filtres quand on clique sur le bouton "Filtres"
 function activerBoutonFiltre() {
@@ -317,9 +373,35 @@ function activerSelecteurJour() {
     const inputJour = document.getElementById("jour");
     inputJour.addEventListener("change", function () {
         document.getElementById("periode").value = "";
+        document.getElementById("recherche").value = "";
         chargerSeances(inputJour.value);
     });
 }
+
+// Filtre en direct à chaque lettre tapée ou effacée dans la barre de recherche
+function activerRecherche() {
+    const champ = document.getElementById("recherche");
+    const formulaire = document.getElementById("formulaire-recherche");
+
+    // Entrée ou 🔍 : le filtrage se fait déjà en tapant, on empêche juste le rechargement de la page
+    formulaire.addEventListener("submit", function (event) {
+        event.preventDefault();
+    });
+
+    champ.addEventListener("input", function () {
+        if (champ.value.trim() === "") {
+            chargerSeances(); // champ vidé : retour aux séances du jour
+            return;
+        }
+
+        // La recherche remplace le mode jour/période : on vide les deux sélecteurs
+        document.getElementById("jour").value = "";
+        document.getElementById("periode").value = "";
+
+        rechercherFilm();
+    });
+}
+
 
 // Recharge les films d'une période quand on change l'option du sélecteur de période
 function activerSelecteurPeriode() {
@@ -327,6 +409,7 @@ function activerSelecteurPeriode() {
     selectPeriode.addEventListener("change", function () {
         if (selectPeriode.value) {
             document.getElementById("jour").value = "";
+            document.getElementById("recherche").value = "";
             chargerFilmsPeriode(selectPeriode.value);
         }
     });
@@ -553,3 +636,4 @@ activerDepliantsFiltres();
 activerFiltreCinema();
 activerFiltresLangueFormat();
 activerTri();
+activerRecherche();

@@ -75,15 +75,40 @@ p {
     color: #6dd3d7;   /* cinéma = turquoise, dans les deux modes */
 }
 
+/* En-tête en 3 colonnes : logo | titre | recherche. Les deux colonnes de côté ont la même largeur (1fr),
+   donc le titre (auto = juste sa taille) est pile au centre de la page */
 .entete {
-    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;   /* les trois centrés verticalement entre eux */
+    padding: 6px;
 }
 
 .logo {
-    position: absolute;
-    left: 20px;
-    top: 0;
-    width: 90px;
+    width: 60px;
+    justify-self: start;   /* collé à gauche de sa colonne */
+}
+
+#formulaire-recherche {
+    justify-self: end;     /* collée à droite de sa colonne */
+    display: flex;
+    gap: 6px;
+}
+
+#formulaire-recherche >input {
+    padding: 8px;
+    background-color: #1F3355;
+    color: #6dd3d7;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    font-family: "Germania One", sans-serif;
+    cursor: pointer;
+}
+
+#formulaire-recherche span {
+    padding: 8px 8px 8px 0px;
 }
 
 .barre-outils {
