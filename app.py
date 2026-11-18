@@ -163,6 +163,9 @@ def accueil():
 @app.route("/api/seances")
 def seances():
     jour = request.args.get("jour", date.today().isoformat())
+    # Site public : on n'accepte que les jours de la période max (une date inventée = 6 appels à Allociné)
+    if jour not in jours_de_la_periode(SEMAINES_MAX):
+        return jsonify({})
     films = {}
 
     for nom_cinema, id_cinema in CINEMAS.items():
@@ -183,13 +186,18 @@ def seances():
 
 @app.route("/api/films-periode")
 def films_periode():
-    semaines = int(request.args.get("semaines", 1))
+    # Site public : on borne le nombre de semaines entre 1 et SEMAINES_MAX (sinon semaines=50 = des milliers d'appels)
+    semaines = request.args.get("semaines", 1, type=int)
+    semaines = max(1, min(semaines, SEMAINES_MAX))
 
     cinemas_param = request.args.get("cinemas")
     if cinemas_param is not None:
         noms_cinemas = cinemas_param.split(",") if cinemas_param else []
     else:
         noms_cinemas = list(CINEMAS.keys())
+
+    # Site public : on ignore les noms de cinémas inconnus (sinon CINEMAS[nom] plante avec une erreur 500)
+    noms_cinemas = [nom for nom in noms_cinemas if nom in CINEMAS]
 
     films = {}
     for jour in jours_de_la_periode(semaines):
