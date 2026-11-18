@@ -28,9 +28,10 @@ venv\Scripts\activate
 python app.py
 # -> http://127.0.0.1:5000  (index at "/", JSON data at "/api/seances")
 
-# After adding a new dependency
+# After adding a new dependency (on the PC, venv active)
 pip install <package>
-pip freeze > requirements.txt
+pip freeze | Out-File -Encoding utf8 requirements.txt   # plain `>` writes UTF-16 in Windows PowerShell, which Git treats as binary
+# then re-add the `gunicorn` line by hand (only installed on the Pi, so absent from the PC's freeze)
 ```
 
 There is no test suite, linter, or build step in this project yet.
